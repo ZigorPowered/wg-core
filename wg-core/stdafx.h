@@ -15,3 +15,5 @@ WGCore precompiled header
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+#include <unordered_map>
