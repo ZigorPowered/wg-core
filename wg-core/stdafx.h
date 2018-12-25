@@ -17,3 +17,4 @@ WGCore precompiled header
 #include <tchar.h>
 
 #include <unordered_map>
+#include <list>

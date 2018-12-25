@@ -1,102 +1,58 @@
 #pragma once
 
-//#include "stdafx.h"
+#define CORE_ERROR -1;
+#define CORE_NO_ERROR 0;
 
-#define CORE_TMP_WINDOW			"CORE_TEMPLATE_BASIC_WINDOW"
-#define CORE_RC_CURSOR_DEFAULT	"CORE_RC_DEFAULT_CURSOR"
+typedef UINT CoreUINT, CoreFlagU;
+typedef LPCTSTR CoreCSTR;
+typedef HINSTANCE CoreAppHdl;
+typedef WNDPROC CoreProcHdl;
+typedef HWND CoreDlgHdl;
+typedef WPARAM CoreProcArgU, CorePtrU;
+typedef LPARAM CoreProcArg, CorePtrL;
 
-typedef unsigned long COREint32, COREColor, COREFlag;
-typedef LPCTSTR COREcstr, COREResource;
+typedef LRESULT(*CoreCallback)(CoreDlgHdl, CorePtrU, CorePtrL);
+typedef std::unordered_map<CoreFlagU, CoreCallback> CoreProcMap;
 
-typedef HINSTANCE COREAppHandle;
-typedef HMENU COREControlID;
-typedef HWND COREControlHandle;
+class CoreDlgProc;
+class CoreDlgContext;
 
-typedef std::unordered_map<COREResource, COREint32> COREResourceMap;
-
-struct COREControlTemplate;
-
-struct COREControlTemplate
+class CoreDlgProc
 {
-	COREcstr templateID;
-	COREControlID controlID;
-	int xPos;
-	int yPos;
-	int width;
-	int height;
-	COREcstr title;
-	COREColor bgColor;
-	COREResource cursorType;
-	COREResource defaultIcon;
-	COREFlag templateFlags;
-	COREFlag controlStyle;
-	COREFlag controlExStyle;
+public:
+	CoreDlgProc();
+	~CoreDlgProc();
+
+	void set_callback(CoreFlagU callbackID, CoreCallback callback);
+	void remove_callback(CoreFlagU callbackID);
+	CoreProcHdl get_proc_handle();
+private:
+	CoreProcMap* _callbacks;
+	LRESULT _proc(CoreDlgHdl hDlg, CoreFlagU msgFlags, CorePtrU wPrm, CorePtrL lPrm);
 };
 
-extern COREResourceMap* CORE_RC_MAP;
-
-void LoadResource(COREResource resourceID, const char* rcFile)
+class CoreDlgContext
 {
-	FILE* pFile = fopen(rcFile, "r");
-	if (pFile == NULL)
-		return;
+public:
+	CoreDlgContext(CoreCSTR contextName);
+	CoreDlgContext(CoreCSTR contextName, CoreDlgProc* contextProc);
+	CoreDlgContext(CoreCSTR contextName, CoreDlgProc* contextProc, CoreAppHdl hApp, CoreFlagU contextStyles, HBRUSH bgData, HCURSOR cursorData, HICON iconData);
+	~CoreDlgContext();
 
-	char readBuffer[256];
-	char* rcName;
-	while (!feof(pFile))
-	{
-		fgets(readBuffer, 256, pFile);
+	int register_context();
+	int set_context_data(CoreCSTR contextName, CoreDlgProc* contextProc, CoreAppHdl hApp, CoreFlagU contextStyles, HBRUSH bgData, HCURSOR cursorData, HICON iconData);
+private:
+	WNDCLASSEX* _data;
+	CoreCSTR _contextName;
+};
 
-		if (readBuffer[0] == '#')
-		{
-			rcName = &readBuffer[1];
-			if (strcmp(rcName, (LPCSTR)resourceID) == 0)
-			{
-
-			}
-		}
-	}
-
+namespace core
+{
+	CoreAppHdl GetAppHandle();
+	LRESULT __stdcall DefaultDialogProc(CoreDlgHdl hDialog, CoreFlagU procFlags, CoreProcArgU uArgs, CoreProcArg args);
 }
 
-COREAppHandle GetMainHandle()
-{
-	return GetModuleHandle(NULL);
-}
 
-void LoadTemplate(COREControlTemplate* targetTemplate, COREResource templateID)
-{
-}
 
-COREControlHandle CreateControl(const COREControlTemplate* controlTemplate, COREControlHandle parentHdl, COREAppHandle mainHdl)
-{
-	if (mainHdl == NULL)
-		mainHdl = GetMainHandle();
 
-	WNDCLASSEX clsControl;
-	memset(&clsControl, 0, sizeof(WNDCLASSEX));
-	clsControl.cbSize = sizeof(WNDCLASSEX);
-	clsControl.lpszClassName = controlTemplate->templateID;
-	clsControl.lpfnWndProc = DefWindowProc;
-	clsControl.hInstance = mainHdl;
 
-	clsControl.style = controlTemplate->templateFlags;
-	clsControl.hbrBackground = CreateSolidBrush(controlTemplate->bgColor);
-	clsControl.hCursor = LoadCursor(0, controlTemplate->cursorType);
-	clsControl.hIcon = LoadIcon(0, controlTemplate->defaultIcon);
-
-	if (RegisterClassEx(&clsControl) == 0)
-		return NULL;
-
-	HWND hControl = CreateWindowEx(controlTemplate->controlExStyle,
-									controlTemplate->templateID,
-									controlTemplate->title,
-									controlTemplate->controlStyle,
-									controlTemplate->xPos,
-									controlTemplate->yPos,
-									controlTemplate->width,
-									controlTemplate->height,
-									parentHdl, controlTemplate->controlID, mainHdl, 0);
-
-	return hControl;
-}
