@@ -18,23 +18,23 @@ CoreDlgProc::~CoreDlgProc()
 }
 
 /**************************[PUBLIC METHODS]**************************/
-void CoreDlgProc::set_callback(CoreFlagU callbackID, CoreCallback callback)
+void CoreDlgProc::set_callback(CoreFlagU32 callbackID, CoreCallback callback)
 {
 	//TODO: Verify callbackID as valid WindowsMessage
 	if (callback == nullptr)
 		return;
 	(*_callbacks)[callbackID] = callback;
 }
-void CoreDlgProc::remove_callback(CoreFlagU callbackID)
+void CoreDlgProc::remove_callback(CoreFlagU32 callbackID)
 {
 	_callbacks->erase(callbackID);
 }
-CoreProcHdl CoreDlgProc::get_proc_handle()
+CoreDlgProcHdl CoreDlgProc::get_proc_handle()
 {
 	return this->_proc;
 }
 /**************************[PRIVATE METHODS]**************************/
-LRESULT CoreDlgProc::_proc(CoreDlgHdl hDlg, CoreFlagU msgFlags, CorePtrU wPrm, CorePtrL lPrm)
+LRESULT CoreDlgProc::_proc(CoreDlgHdl hDlg, CoreFlagU32 msgFlags, CorePtrU wPrm, CorePtrL lPrm)
 {
 	auto callbackSearch = _callbacks->find(msgFlags);
 	if (callbackSearch == _callbacks->end())
@@ -45,59 +45,23 @@ LRESULT CoreDlgProc::_proc(CoreDlgHdl hDlg, CoreFlagU msgFlags, CorePtrU wPrm, C
 }
 /*******************************************************************************************************/
 
-/*********************************************[CoreDlgContext]*********************************************/
-
-/**************************[CONSTRUCTORS / DESTRUCTORS]**************************/
-CoreDlgContext::CoreDlgContext(CoreCSTR contextName) :
-	_contextName(contextName), _data(new WNDCLASSEX)
-{
-	memset(_data, 0, sizeof(WNDCLASSEX));
-	_data->cbSize = sizeof(WNDCLASSEX);
-	_data->lpszClassName = _contextName;
-	_data->hInstance = core::GetAppHandle();
-	_data->lpfnWndProc = core::DefaultDialogProc;
-}
-CoreDlgContext::CoreDlgContext(CoreCSTR contextName, CoreDlgProc* contextProc) : 
-	CoreDlgContext(contextName)
-{
-	_data->lpfnWndProc = contextProc->get_proc_handle();
-}
-CoreDlgContext::CoreDlgContext(CoreCSTR contextName, CoreDlgProc* contextProc, CoreAppHdl hApp, CoreFlagU contextStyles, HBRUSH bgData, HCURSOR cursorData, HICON iconData) :
-	CoreDlgContext(contextName, contextProc)
-{
-	_data->hInstance = hApp;
-	_data->style = contextStyles;
-	_data->hbrBackground = bgData;
-	_data->hCursor = cursorData;
-	_data->hIcon = iconData;
-}
-CoreDlgContext::~CoreDlgContext()
-{
-	UnregisterClass(_contextName, _data->hInstance);
-	delete _data;
-}
-
-/**************************[PUBLIC METHODS]**************************/
-int CoreDlgContext::register_context()
-{
-	auto status = RegisterClassEx(_data);
-	if (status == 0)
-		return CORE_ERROR;
-	return CORE_NO_ERROR;
-}
-int CoreDlgContext::set_context_data(CoreCSTR contextName, CoreDlgProc* contextProc, CoreAppHdl hApp, CoreFlagU contextStyles, HBRUSH bgData, HCURSOR cursorData, HICON iconData)
-{
-	//TODO: Check for register befoire changing
-}
-/**********************************************************************************************************/
 
 /*********************************************[core]*********************************************/
 CoreAppHdl core::GetAppHandle()
 {
 	return GetModuleHandle(NULL);
 }
-LRESULT __stdcall core::DefaultDialogProc(CoreDlgHdl hDialog, CoreFlagU procFlags, CoreProcArgU uArgs, CoreProcArg args)
+LRESULT __stdcall core::DefaultDialogProc(CoreDlgHdl hDialog, CoreFlagU32 procFlags, CoreProcArgU uArgs, CoreProcArg args)
 {
 	return DefWindowProc(hDialog, procFlags, uArgs, args);
+}
+int CreateDlgContext(CoreCSTR contextName, CoreDlgProc* contextProc, CoreAppHdl appHdl, CoreFlagU32 contextFlags, HBRUSH bgData, HCURSOR cursorData, HICON iconData)
+{
+	WNDCLASSEX clsData;
+	memset(&clsData, 0, sizeof(WNDCLASSEX));
+	clsData.cbSize = sizeof(WNDCLASSEX);
+	clsData.lpszClassName = contextName;
+	clsData.lpfnWndProc = contextProc->get_proc_handle();
+
 }
 /************************************************************************************************/

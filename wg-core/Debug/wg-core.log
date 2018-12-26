@@ -1,3 +1,2 @@
-﻿  wg-core.cpp
-  wg-core.vcxproj -> C:\Development\C++\WGCore\wg-core\Debug\wg-core.exe
-  wg-core.vcxproj -> C:\Development\C++\WGCore\wg-core\Debug\wg-core.pdb (Full PDB)
+﻿  wg_core.cpp
+c:\development\vs\cpp\wgcore\wg-core\wg-core\wg_core.cpp(34): error C2276: '&': illegal operation on bound member function expression
